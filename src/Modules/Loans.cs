@@ -11,25 +11,25 @@ public static class Loans {
     private static readonly IDictionary<int, LoanInfo> LoanInfos = new Dictionary<int, LoanInfo>();
 
     static Loans() {
-        AddLoan(100, 0, 0, "Занять у родственников");
-        AddLoan(500, 0, 10, "Занять у друга");
-        AddLoan(1500, 0, 25, "Занять у близкого друга");
-        AddLoan(2500, 0, 40, "Занять у знакомого бизнесмена");
+        AddLoan(LoanSource.Private, 100, 0, 0, "Занять у родственников");
+        AddLoan(LoanSource.Private, 500, 0, 10, "Занять у друга");
+        AddLoan(LoanSource.Private, 1500, 0, 25, "Занять у близкого друга");
+        AddLoan(LoanSource.Private, 2500, 0, 40, "Занять у знакомого бизнесмена");
 
-        AddLoan(300, 0.1f, 0, "Занять у местной группировки");
-        AddLoan(2000, 0.15f, 15, "Средний займ у группировки");
-        AddLoan(4000, 0.20f, 30, "Большой займ у группировки");
-        AddLoan(8000, 0.25f, 45, "Крупный займ у группировки");
+        AddLoan(LoanSource.Criminals, 300, 0.1f, 0, "Занять у местной группировки");
+        AddLoan(LoanSource.Criminals, 2000, 0.15f, 15, "Средний займ у группировки");
+        AddLoan(LoanSource.Criminals, 4000, 0.20f, 30, "Большой займ у группировки");
+        AddLoan(LoanSource.Criminals, 8000, 0.25f, 45, "Крупный займ у группировки");
 
-        AddLoan(1000, 0.01f, 5, "Малый кредит");
-        AddLoan(2500, 0.02f, 20, "Средний кредит");
-        AddLoan(5000, 0.03f, 35, "Большой кредит");
-        AddLoan(10000, 0.04f, 50, "Профессиональный кредит");
+        AddLoan(LoanSource.Bank, 1000, 0.01f, 5, "Малый кредит");
+        AddLoan(LoanSource.Bank, 2500, 0.02f, 20, "Средний кредит");
+        AddLoan(LoanSource.Bank, 5000, 0.03f, 35, "Большой кредит");
+        AddLoan(LoanSource.Bank, 10000, 0.04f, 50, "Профессиональный кредит");
     }
 
-    private static void AddLoan(int sum, float dailyPercent, int requiredLevel, string title) {
+    private static void AddLoan(LoanSource source, int sum, float dailyPercent, int requiredLevel, string title) {
         var loanId = LoanInfos.Count + 1;
-        var loanInfo = new LoanInfo(title, sum, dailyPercent, requiredLevel);
+        var loanInfo = new LoanInfo(source, title, sum, dailyPercent, requiredLevel);
 
         LoanInfos.Add(loanId, loanInfo);
     }
@@ -122,11 +122,14 @@ public static class Loans {
 
         public BankCreditSO Instance { get; private set; }
 
+        public readonly LoanSource Source;
+
         public readonly string Title;
 
         private readonly Action<BankCreditSO> Filler;
 
-        public LoanInfo(string title, int sum, float dailyPercent, int requiredLevel) {
+        public LoanInfo(LoanSource source, string title, int sum, float dailyPercent, int requiredLevel) {
+            Source = source;
             Title = title;
             Filler = loan => {
                 loan.Amount = sum;
@@ -139,6 +142,12 @@ public static class Loans {
             Instance = instance;
             Filler(instance);
         }
+    }
+    
+    private enum LoanSource {
+        Private,
+        Criminals,
+        Bank
     }
 
     public static class Patches {
