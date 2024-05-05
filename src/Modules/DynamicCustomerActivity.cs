@@ -37,7 +37,7 @@ internal static class DynamicCustomerActivity {
 
     private static int CurrentHour => Manager.CurrentHour + (Manager.AM || Manager.CurrentHour == 12 ? 0 : 12);
     
-    public static float CurrentActivity => GetHourlyRate(CurrentHour) * Weekday.Of(CurrentDay).ActivityRate;
+    public static float CurrentActivity { get; private set; }
 
     private static bool guiInitialized;
 
@@ -165,6 +165,16 @@ internal static class DynamicCustomerActivity {
         return Color.HSVToRGB(clampedValue, 0.5f + clampedValue, 0.8f);
     }
 
+    private static float UpdateCurrentActivity() {
+        var randomFactor = 1 + (Random.value - Random.value) * 0.05f;
+
+        CurrentActivity = GetHourlyRate(CurrentHour)
+                          * Weekday.Of(CurrentDay).ActivityRate
+                          * randomFactor;
+        
+        return CurrentActivity;
+    }
+
     private static float GetHourlyRate(int hour) {
         return GetHourWeight(hour) / AverageHourlyWeight;
     }
@@ -211,7 +221,7 @@ internal static class DynamicCustomerActivity {
         [HarmonyPatch(typeof(CustomerSpawnSettingManager), "GetCustomerSpawningTime")]
         [HarmonyPostfix]
         public static void GetCustomerSpawningTime(ref float __result) {
-            __result /= CurrentActivity;
+            __result /= UpdateCurrentActivity();
 
             UpdateGui();
         }
