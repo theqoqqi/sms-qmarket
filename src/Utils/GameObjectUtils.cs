@@ -2,7 +2,7 @@
 using TMPro;
 using UnityEngine;
 
-namespace QMarketPlugin.Utils; 
+namespace QMarketPlugin.Utils;
 
 public static class GameObjectUtils {
 
@@ -29,5 +29,30 @@ public static class GameObjectUtils {
         }
 
         return textGameObject;
+    }
+
+    public static void PrintNamesUpByHierarchy(GameObject gameObject) {
+        Debug.Log(gameObject.name);
+
+        if (gameObject.transform.parent != null) {
+            PrintNamesUpByHierarchy(gameObject.transform.parent.gameObject);
+        }
+    }
+
+    public static void PrintNamesDownByHierarchy(GameObject gameObject, int indentLevel = 0) {
+        var indentation = "".PadRight(indentLevel * 2, ' ');
+        Debug.Log(indentation + gameObject.name);
+
+        foreach (Transform child in gameObject.transform) {
+            PrintNamesDownByHierarchy(child.gameObject, indentLevel + 1);
+        }
+    }
+
+    public static void PrintComponentNames(GameObject gameObject) {
+        var components = gameObject.GetComponents<Component>();
+
+        foreach (var component in components) {
+            Debug.Log(component.GetType().Name);
+        }
     }
 }
