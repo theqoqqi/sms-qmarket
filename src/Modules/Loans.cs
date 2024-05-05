@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
+using QMarketPlugin.Utils;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace QMarketPlugin.Modules;
 
@@ -118,6 +122,49 @@ public static class Loans {
         rectTransform.localScale = new Vector3(0.75f, 0.75f, 1f);
     }
     
+    private static void UpdateLoanAvailableLayout(
+            BankCreditSO loan,
+            TMP_Text dailyInterestText,
+            Button activateButton
+    ) {
+        dailyInterestText.text = $"{loan.DailyInterestPercent * 100}%";
+
+        SetLoanButtonActive(activateButton, CanTakeLoan(loan));
+    }
+
+    private static void SetLoanButtonActive(Button button, bool isActive) {
+        var activeColor = new Color(0.063f, 0.708f, 0.3f);
+        var lockedColor = new Color(0.708f, 0.063f, 0.3f);
+        var color = isActive ? activeColor : lockedColor;
+
+        button.interactable = isActive;
+        button.GetComponent<Image>().color = color;
+    }
+    
+    private static bool CanTakeLoan(BankCreditSO loan) {
+        return !BankManager.Instance.Loans
+                .Any(data => data.Taken && IsSameSource(loan, data));
+    }
+
+    private static bool IsSameSource(BankCreditSO loan, LoanData data) {
+        return LoanInfos[data.LoanID].Source == LoanInfos[loan.ID].Source;
+    }
+
+    private static void AddLoanListeners() {
+        BankManager.Instance.onTakenLoan += _ => UpdateLoanUis();
+        BankManager.Instance.onCompletedLoan += _ => UpdateLoanUis();
+    }
+
+    private static void UpdateLoanUis() {
+        var loanItems = Object.FindObjectsOfType<LoanItem>();
+
+        foreach (var loanItem in loanItems) {
+            var method = ReflectionUtils.GetNonPublicMethod(loanItem, "UpdateAvailableLayoutUI");
+
+            method.Invoke(loanItem, Array.Empty<object>());
+        }
+    }
+
     private class LoanInfo {
 
         public BankCreditSO Instance { get; private set; }
@@ -163,6 +210,16 @@ public static class Loans {
         private static void Setup(LoanItem __instance) {
             SetupLoanItem(__instance);
         }
+        
+        [HarmonyPatch(typeof(LoanItem), "UpdateAvailableLayoutUI")]
+        [HarmonyPostfix]
+        private static void UpdateAvailableLayoutUI(
+                BankCreditSO ___m_Loan,
+                TMP_Text ___m_DailyInterestText,
+                Button ___m_LoanButton
+        ) {
+            UpdateLoanAvailableLayout(___m_Loan, ___m_DailyInterestText, ___m_LoanButton);
+        }
 
         [HarmonyPatch(typeof(LocalizationManager), "Awake")]
         [HarmonyPrefix]
@@ -186,6 +243,7 @@ public static class Loans {
         [HarmonyPrefix]
         private static void Setup(List<BankCreditSO> ___m_Loans) {
             AddMissingLoans(___m_Loans);
+            AddLoanListeners();
         }
 
         [HarmonyPatch(typeof(BankManager), "LoadLoanDatas")]
