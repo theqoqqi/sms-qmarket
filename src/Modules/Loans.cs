@@ -8,12 +8,7 @@ namespace QMarketPlugin.Modules;
 
 public static class Loans {
 
-    private static readonly IDictionary<int, Action<BankCreditSO>> LoanFillers =
-            new Dictionary<int, Action<BankCreditSO>>();
-
-    private static readonly IDictionary<int, BankCreditSO> LoanInstances = new Dictionary<int, BankCreditSO>();
-
-    private static readonly IDictionary<int, string> LoanTitles = new Dictionary<int, string>();
+    private static readonly IDictionary<int, LoanInfo> LoanInfos = new Dictionary<int, LoanInfo>();
 
     static Loans() {
         AddLoan(100, 0, 0, "Занять у родственников");
@@ -40,7 +35,7 @@ public static class Loans {
     }
 
     private static void CreateMissingLoans(List<BankCreditSO> loans) {
-        foreach (var loanId in LoanFillers.Keys) {
+        foreach (var loanId in LoanInfos.Keys) {
             if (!LoanExists(loans, loanId)) {
                 loans.Add(CreateExtraLoan(loanId));
             }
@@ -49,17 +44,12 @@ public static class Loans {
 
     private static void SetupLoanInstances(List<BankCreditSO> loans) {
         foreach (var loan in loans) {
-            SetupLoan(loan);
-            LoanInstances[loan.ID] = loan;
+            LoanInfos[loan.ID].AssignInstance(loan);
         }
     }
 
-    private static void SetupLoan(BankCreditSO loan) {
-        LoanFillers[loan.ID](loan);
-    }
-
     private static void AddMissingLoans(List<BankCreditSO> loans) {
-        foreach (var loanId in LoanFillers.Keys) {
+        foreach (var loanId in LoanInfos.Keys) {
             EnsureLoanExists(loans, loanId);
         }
     }
@@ -81,20 +71,16 @@ public static class Loans {
     }
 
     private static void AddLocalizationKeys(IDictionary<int, string> localizedLoanNames) {
-        foreach (var entry in LoanTitles) {
-            localizedLoanNames[entry.Key] = entry.Value;
+        foreach (var entry in LoanInfos) {
+            localizedLoanNames[entry.Key] = entry.Value.Title;
         }
     }
 
     private static void AddLoan(int sum, float dailyPercent, int requiredLevel, string title) {
-        var loanId = LoanFillers.Count + 1;
+        var loanId = LoanInfos.Count + 1;
+        var loanInfo = new LoanInfo(title, sum, dailyPercent, requiredLevel);
 
-        LoanTitles.Add(loanId, title);
-        LoanFillers.Add(loanId, loan => {
-            loan.Amount = sum;
-            loan.DailyInterestPercent = dailyPercent;
-            loan.RequiredPlayerLevel = requiredLevel;
-        });
+        LoanInfos.Add(loanId, loanInfo);
     }
 
     private static bool LoanExists(List<BankCreditSO> loans, int id) {
@@ -102,11 +88,11 @@ public static class Loans {
     }
 
     private static bool CanAddExtraLoan(int loanId) {
-        return LoanFillers.ContainsKey(loanId);
+        return LoanInfos.ContainsKey(loanId);
     }
 
     private static void AddExtraLoan(ICollection<BankCreditSO> loans, int loanId) {
-        loans.Add(LoanInstances[loanId]);
+        loans.Add(LoanInfos[loanId].Instance);
     }
 
     private static BankCreditSO CreateExtraLoan(int loanId) {
@@ -130,6 +116,29 @@ public static class Loans {
         var rectTransform = loanItem.GetComponent<RectTransform>();
 
         rectTransform.localScale = new Vector3(0.75f, 0.75f, 1f);
+    }
+    
+    private class LoanInfo {
+
+        public BankCreditSO Instance { get; private set; }
+
+        public readonly string Title;
+
+        private readonly Action<BankCreditSO> Filler;
+
+        public LoanInfo(string title, int sum, float dailyPercent, int requiredLevel) {
+            Title = title;
+            Filler = loan => {
+                loan.Amount = sum;
+                loan.DailyInterestPercent = dailyPercent;
+                loan.RequiredPlayerLevel = requiredLevel;
+            };
+        }
+
+        public void AssignInstance(BankCreditSO instance) {
+            Instance = instance;
+            Filler(instance);
+        }
     }
 
     public static class Patches {
