@@ -27,6 +27,13 @@ public static class Loans {
         AddLoan(10000, 0.04f, 50, "Профессиональный кредит");
     }
 
+    private static void AddLoan(int sum, float dailyPercent, int requiredLevel, string title) {
+        var loanId = LoanInfos.Count + 1;
+        var loanInfo = new LoanInfo(title, sum, dailyPercent, requiredLevel);
+
+        LoanInfos.Add(loanId, loanInfo);
+    }
+
     private static void SetupLoans(IEnumerable<BankCreditSO> existingLoans) {
         var loans = new List<BankCreditSO>(existingLoans);
 
@@ -40,6 +47,14 @@ public static class Loans {
                 loans.Add(CreateExtraLoan(loanId));
             }
         }
+    }
+
+    private static BankCreditSO CreateExtraLoan(int loanId) {
+        var loan = ScriptableObject.CreateInstance<BankCreditSO>();
+
+        loan.ID = loanId;
+
+        return loan;
     }
 
     private static void SetupLoanInstances(List<BankCreditSO> loans) {
@@ -76,13 +91,6 @@ public static class Loans {
         }
     }
 
-    private static void AddLoan(int sum, float dailyPercent, int requiredLevel, string title) {
-        var loanId = LoanInfos.Count + 1;
-        var loanInfo = new LoanInfo(title, sum, dailyPercent, requiredLevel);
-
-        LoanInfos.Add(loanId, loanInfo);
-    }
-
     private static bool LoanExists(List<BankCreditSO> loans, int id) {
         return loans.Find(loan => loan.ID == id);
     }
@@ -93,14 +101,6 @@ public static class Loans {
 
     private static void AddExtraLoan(ICollection<BankCreditSO> loans, int loanId) {
         loans.Add(LoanInfos[loanId].Instance);
-    }
-
-    private static BankCreditSO CreateExtraLoan(int loanId) {
-        var loan = ScriptableObject.CreateInstance<BankCreditSO>();
-
-        loan.ID = loanId;
-
-        return loan;
     }
 
     private static void SetupLoansTab(LoansTab tab) {
