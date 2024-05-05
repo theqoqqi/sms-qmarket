@@ -1,4 +1,6 @@
-﻿using HarmonyLib;
+﻿using System.Collections.Generic;
+using System.Linq;
+using HarmonyLib;
 using QMarketPlugin.Patches;
 using QMarketPlugin.Utils;
 using TMPro;
@@ -8,6 +10,8 @@ using UnityEngine.Localization.Components;
 namespace QMarketPlugin.Modules;
 
 public static class DailyStatistics {
+
+    private static TMP_Text billsText;
 
     private static TMP_Text dailyWageText;
 
@@ -19,12 +23,36 @@ public static class DailyStatistics {
 
     private static void SetupGui(
             DailyStatisticsScreen screen,
+            DailyStatisticsScreenAnimation animation,
             TMP_Text billsText,
             TMP_Text balanceText
     ) {
         DailyStatistics.screen = screen;
+        DailyStatistics.billsText = billsText;
         dailyWageText = AddDailyWageLine(billsText);
         DailyStatistics.balanceText = balanceText;
+
+        AnimateNewGui(animation);
+    }
+
+    private static void AnimateNewGui(DailyStatisticsScreenAnimation animation) {
+        var animatedElements = GetAnimatedElements(animation);
+
+        animatedElements.InsertAfter(GetCanvasGroup(dailyWageText), GetCanvasGroup(billsText));
+
+        SetAnimatedElements(animation, animatedElements);
+    }
+
+    private static List<CanvasGroup> GetAnimatedElements(DailyStatisticsScreenAnimation animation) {
+        return ReflectionUtils.GetNonPublicFieldValue<CanvasGroup[]>(animation, "m_UIElements").ToList();
+    }
+
+    private static void SetAnimatedElements(DailyStatisticsScreenAnimation animation, List<CanvasGroup> value) {
+        ReflectionUtils.SetNonPublicFieldValue(animation, "m_UIElements", value.ToArray());
+    }
+
+    private static CanvasGroup GetCanvasGroup(TMP_Text textComponent) {
+        return textComponent.transform.parent.GetComponent<CanvasGroup>();
     }
 
     private static void UpdateGui() {
@@ -94,10 +122,11 @@ public static class DailyStatistics {
         [HarmonyPostfix]
         private static void Start(
                 DailyStatisticsScreen __instance,
+                DailyStatisticsScreenAnimation ___m_ScreenAnimation,
                 TMP_Text ___m_BillsText,
                 TMP_Text ___m_BalanceText
         ) {
-            SetupGui(__instance, ___m_BillsText, ___m_BalanceText);
+            SetupGui(__instance, ___m_ScreenAnimation, ___m_BillsText, ___m_BalanceText);
         }
 
         [HarmonyPatch(typeof(DailyStatisticsScreen), "UpdateDailyStatistics")]
