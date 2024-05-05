@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using QMarketPlugin.Patches;
 
 namespace QMarketPlugin; 
 
@@ -15,6 +16,7 @@ public class Plugin : BaseUnityPlugin {
         Instance = this;
 
         harmony = new Harmony("ru.qoqqi.qmarket.patches");
+        harmony.PatchAll(typeof(EmployeeManagerPatch));
 
         Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_NAME} is loaded!");
     }
