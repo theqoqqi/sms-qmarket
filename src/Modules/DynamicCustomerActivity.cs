@@ -58,6 +58,33 @@ internal static class DynamicCustomerActivity {
         SetActivityText(CurrentActivity);
     }
 
+    public static ItemQuantity ModifyShoppingList(ItemQuantity itemQuantity) {
+        var isLargePurchase = Random.value < Weekday.Of(CurrentDay).LargePurchaseChance;
+        
+        if (isLargePurchase) {
+            HandleLargePurchase(itemQuantity);
+        }
+
+        return itemQuantity;
+    }
+
+    private static void HandleLargePurchase(ItemQuantity itemQuantity) {
+        itemQuantity.Products = itemQuantity.Products.ToDictionary(
+                pair => pair.Key,
+                pair => pair.Value + GetRandomExtraProductCount()
+        );
+    }
+
+    private static int GetRandomExtraProductCount() {
+        var count = 1;
+
+        while (Random.value < 0.5f) {
+            count++;
+        }
+
+        return count;
+    }
+
     private static void AddGui() {
         var panel = AddPanel();
 
@@ -150,24 +177,27 @@ internal static class DynamicCustomerActivity {
     public class Weekday {
         
         public static readonly Dictionary<int, Weekday> Weekdays = new Dictionary<int, Weekday> {
-                {0, new Weekday("Понедельник", 0.8f, false)},
-                {1, new Weekday("Вторник", 0.95f, false)},
-                {2, new Weekday("Среда", 0.85f, false)},
-                {3, new Weekday("Четверг", 0.9f, false)},
-                {4, new Weekday("Пятница", 1f, false)},
-                {5, new Weekday("Суббота", 1.3f, true)},
-                {6, new Weekday("Воскресенье", 1.2f, true)},
+                {0, new Weekday("Понедельник", 0.8f, 0.05f, false)},
+                {1, new Weekday("Вторник", 0.95f, 0.05f, false)},
+                {2, new Weekday("Среда", 0.85f, 0.05f, false)},
+                {3, new Weekday("Четверг", 0.9f, 0.05f, false)},
+                {4, new Weekday("Пятница", 1f, 0.15f, false)},
+                {5, new Weekday("Суббота", 1.3f, 0.35f, true)},
+                {6, new Weekday("Воскресенье", 1.2f, 0.25f, true)},
         };
 
         public readonly string Title;
 
         public readonly float ActivityRate;
 
+        public readonly float LargePurchaseChance;
+
         public readonly bool IsWeekend;
 
-        public Weekday(string title, float activityRate, bool isWeekend) {
+        public Weekday(string title, float activityRate, float largePurchaseChance, bool isWeekend) {
             Title = title;
             ActivityRate = activityRate;
+            LargePurchaseChance = largePurchaseChance;
             IsWeekend = isWeekend;
         }
 
@@ -190,6 +220,12 @@ internal static class DynamicCustomerActivity {
         [HarmonyPostfix]
         public static void StartNextDay() {
             UpdateGui();
+        }
+    
+        [HarmonyPatch(typeof(CustomerManager), "CreateShoppingList")]
+        [HarmonyPostfix]
+        public static void CreateShoppingList(ref ItemQuantity __result) {
+            __result = ModifyShoppingList(__result);
         }
     }
 }
