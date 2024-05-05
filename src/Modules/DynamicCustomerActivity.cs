@@ -41,6 +41,10 @@ internal static class DynamicCustomerActivity {
 
     private static bool guiInitialized;
 
+    private static TextMeshProUGUI currentDayText;
+    
+    private static TextMeshProUGUI currentWeekdayText;
+    
     private static TextMeshProUGUI activityText;
 
     public static void UpdateGui() {
@@ -49,12 +53,16 @@ internal static class DynamicCustomerActivity {
             guiInitialized = true;
         }
 
+        SetCurrentDayText(CurrentDay);
+        SetCurrentWeekdayText(CurrentDay);
         SetActivityText(CurrentActivity);
     }
 
     private static void AddGui() {
         var panel = AddPanel();
 
+        currentDayText = AddCurrentDayText(panel.transform);
+        currentWeekdayText = AddCurrentWeekdayText(panel.transform);
         activityText = AddActivityText(panel.transform);
     }
 
@@ -68,10 +76,28 @@ internal static class DynamicCustomerActivity {
         panelTransform.position = Vector3.zero;
         panelTransform.rotation = Quaternion.identity;
         panelTransform.localScale = new Vector3(0.9f, 1f, 1f);
-        panelTransform.anchoredPosition = new Vector2(0f, -15f);
+        panelTransform.anchoredPosition = new Vector2(0f, -50f);
         panelTransform.SetSiblingIndex(0);
 
         return panelGameObject;
+    }
+
+    private static TextMeshProUGUI AddCurrentDayText(Transform parent) {
+        var textGameObject = GameObjectUtils.CreateText(parent, "Current Day Text", 20f);
+        var textTransform = textGameObject.GetComponent<RectTransform>();
+
+        textTransform.anchorMax = new Vector2(1f, 1f);
+
+        return textGameObject.GetComponent<TextMeshProUGUI>();
+    }
+
+    private static TextMeshProUGUI AddCurrentWeekdayText(Transform parent) {
+        var textGameObject = GameObjectUtils.CreateText(parent, "Current Weekday Text", 12f);
+        var textTransform = textGameObject.GetComponent<RectTransform>();
+
+        textTransform.anchorMax = new Vector2(1f, 0.6f);
+
+        return textGameObject.GetComponent<TextMeshProUGUI>();
     }
 
     private static TextMeshProUGUI AddActivityText(Transform parent) {
@@ -81,6 +107,22 @@ internal static class DynamicCustomerActivity {
         textTransform.anchorMax = new Vector2(1f, 0.3f);
 
         return textGameObject.GetComponent<TextMeshProUGUI>();
+    }
+
+    private static void SetCurrentDayText(int day) {
+        currentDayText.text = $"День: {day}";
+    }
+
+    private static void SetCurrentWeekdayText(int day) {
+        var color = GetWeekdayColor(day);
+        
+        currentWeekdayText.text = color.AsHtmlTag() + Weekday.Of(day).Title;
+    }
+
+    private static Color GetWeekdayColor(int day) {
+        return Weekday.Of(day).IsWeekend
+                ? new Color(0f, 0.8f, 0f)
+                : Color.white;
     }
 
     private static void SetActivityText(float value) {
@@ -108,19 +150,25 @@ internal static class DynamicCustomerActivity {
     public class Weekday {
         
         public static readonly Dictionary<int, Weekday> Weekdays = new Dictionary<int, Weekday> {
-                {0, new Weekday(0.8f)},
-                {1, new Weekday(0.95f)},
-                {2, new Weekday(0.85f)},
-                {3, new Weekday(0.9f)},
-                {4, new Weekday(1f)},
-                {5, new Weekday(1.3f)},
-                {6, new Weekday(1.2f)},
+                {0, new Weekday("Понедельник", 0.8f, false)},
+                {1, new Weekday("Вторник", 0.95f, false)},
+                {2, new Weekday("Среда", 0.85f, false)},
+                {3, new Weekday("Четверг", 0.9f, false)},
+                {4, new Weekday("Пятница", 1f, false)},
+                {5, new Weekday("Суббота", 1.3f, true)},
+                {6, new Weekday("Воскресенье", 1.2f, true)},
         };
+
+        public readonly string Title;
 
         public readonly float ActivityRate;
 
-        public Weekday(float activityRate) {
+        public readonly bool IsWeekend;
+
+        public Weekday(string title, float activityRate, bool isWeekend) {
+            Title = title;
             ActivityRate = activityRate;
+            IsWeekend = isWeekend;
         }
 
         public static Weekday Of(int day) {
