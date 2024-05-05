@@ -169,8 +169,8 @@ public static class Loans {
 
         [HarmonyPatch(typeof(IDManager), "BankCreditSO")]
         [HarmonyPrefix]
-        private static void BankCreditSo(int __0, List<BankCreditSO> ___m_BankCredits) {
-            EnsureLoanExists(___m_BankCredits, __0);
+        private static void BankCreditSo(List<BankCreditSO> ___m_BankCredits) {
+            AddMissingLoans(___m_BankCredits);
         }
 
         [HarmonyPatch(typeof(BankManager), "Start")]
