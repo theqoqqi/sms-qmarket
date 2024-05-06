@@ -8,6 +8,12 @@ namespace QMarketPlugin.Modules;
 public static partial class Loans {
     public static class Patches {
 
+        [HarmonyPatch(typeof(LocalizationManager), "Awake")]
+        [HarmonyPrefix]
+        private static void Awake() {
+            Loans.Setup();
+        }
+
         [HarmonyPatch(typeof(LoansTab), "Start")]
         [HarmonyPostfix]
         private static void Setup(LoansTab __instance) {
@@ -28,12 +34,6 @@ public static partial class Loans {
                 Button ___m_LoanButton
         ) {
             UpdateLoanAvailableLayout(___m_Loan, ___m_DailyInterestText, ___m_LoanButton);
-        }
-
-        [HarmonyPatch(typeof(LocalizationManager), "Awake")]
-        [HarmonyPrefix]
-        private static void Awake() {
-            SetupLoans(IDManager.Instance.Loans);
         }
 
         [HarmonyPatch(typeof(LocalizationManager), "UpdateLocalization")]
