@@ -39,12 +39,23 @@ public static class GameObjectUtils {
         }
     }
 
-    public static void PrintNamesDownByHierarchy(GameObject gameObject, int indentLevel = 0) {
+    public static void PrintNamesDownByHierarchy(GameObject gameObject, int maxDepth = 20, int indentLevel = 0) {
         var indentation = "".PadRight(indentLevel * 2, ' ');
-        Debug.Log(indentation + gameObject.name);
+        var text = indentation + gameObject.name;
+
+        if (maxDepth <= 0) {
+            var childCount = gameObject.transform.childCount;
+
+            if (childCount > 0) {
+                Debug.Log($"{text} (has {childCount} children)");
+            }
+            return;
+        }
+        
+        Debug.Log(text);
 
         foreach (Transform child in gameObject.transform) {
-            PrintNamesDownByHierarchy(child.gameObject, indentLevel + 1);
+            PrintNamesDownByHierarchy(child.gameObject, maxDepth - 1, indentLevel + 1);
         }
     }
 
