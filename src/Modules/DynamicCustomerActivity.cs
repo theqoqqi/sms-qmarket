@@ -218,6 +218,13 @@ internal static class DynamicCustomerActivity {
     
     public static class Patches {
 
+        [HarmonyPatch(typeof(DayCycleManager), "Start")]
+        [HarmonyPostfix]
+        public static void Start() {
+            UpdateCurrentActivity();
+            UpdateGui();
+        }
+
         [HarmonyPatch(typeof(CustomerSpawnSettingManager), "GetCustomerSpawningTime")]
         [HarmonyPostfix]
         public static void GetCustomerSpawningTime(ref float __result) {
@@ -229,6 +236,7 @@ internal static class DynamicCustomerActivity {
         [HarmonyPatch(typeof(DayCycleManager), "StartNextDay")]
         [HarmonyPostfix]
         public static void StartNextDay() {
+            UpdateCurrentActivity();
             UpdateGui();
         }
     
