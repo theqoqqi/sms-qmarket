@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using MyBox;
 using UnityEngine;
 
 namespace QMarketPlugin.Utils; 
@@ -11,5 +12,9 @@ public static class Extensions {
 
     public static string AsHtmlTag(this Color color) {
         return "<color=#" + ColorUtility.ToHtmlStringRGB(color) + ">";
+    }
+
+    public static int Random(this RangedInt range, System.Random random) {
+        return random.Next(range.Min, range.Max + 1);
     }
 }
