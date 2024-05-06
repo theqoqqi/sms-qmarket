@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using HarmonyLib;
 using QMarketPlugin.Utils;
 using TMPro;
 using UnityEngine;
@@ -8,7 +7,7 @@ using Object = UnityEngine.Object;
 
 namespace QMarketPlugin.Modules;
 
-internal static class DynamicCustomerActivity {
+internal static partial class DynamicCustomerActivity {
 
     private static readonly Dictionary<int, float> HourlyWeights = new Dictionary<int, float> {
             { 8, 0.1f },
@@ -213,37 +212,6 @@ internal static class DynamicCustomerActivity {
 
         public static Weekday Of(int day) {
             return Weekdays[day % Weekdays.Count];
-        }
-    }
-    
-    public static class Patches {
-
-        [HarmonyPatch(typeof(DayCycleManager), "Start")]
-        [HarmonyPostfix]
-        public static void Start() {
-            UpdateCurrentActivity();
-            UpdateGui();
-        }
-
-        [HarmonyPatch(typeof(CustomerSpawnSettingManager), "GetCustomerSpawningTime")]
-        [HarmonyPostfix]
-        public static void GetCustomerSpawningTime(ref float __result) {
-            __result /= UpdateCurrentActivity();
-
-            UpdateGui();
-        }
-    
-        [HarmonyPatch(typeof(DayCycleManager), "StartNextDay")]
-        [HarmonyPostfix]
-        public static void StartNextDay() {
-            UpdateCurrentActivity();
-            UpdateGui();
-        }
-    
-        [HarmonyPatch(typeof(CustomerManager), "CreateShoppingList")]
-        [HarmonyPostfix]
-        public static void CreateShoppingList(ref ItemQuantity __result) {
-            __result = ModifyShoppingList(__result);
         }
     }
 }
