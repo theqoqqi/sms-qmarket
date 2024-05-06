@@ -35,14 +35,14 @@ internal static partial class DynamicCustomerActivity {
     
     public static float CurrentActivity { get; private set; }
 
-    public static ItemQuantity ModifyShoppingList(ItemQuantity itemQuantity) {
-        var isLargePurchase = Random.value < Weekday.Of(CurrentDay).LargePurchaseChance;
-        
-        if (isLargePurchase) {
+    public static void ModifyShoppingList(ref ItemQuantity itemQuantity) {
+        if (IsLargePurchase()) {
             HandleLargePurchase(itemQuantity);
         }
+    }
 
-        return itemQuantity;
+    private static bool IsLargePurchase() {
+        return Random.value < Weekday.Of(CurrentDay).LargePurchaseChance;
     }
 
     private static void HandleLargePurchase(ItemQuantity itemQuantity) {

@@ -30,7 +30,7 @@ internal static partial class DynamicCustomerActivity {
         [HarmonyPatch(typeof(CustomerManager), "CreateShoppingList")]
         [HarmonyPostfix]
         public static void CreateShoppingList(ref ItemQuantity __result) {
-            __result = ModifyShoppingList(__result);
+            ModifyShoppingList(ref __result);
         }
     }
 }
