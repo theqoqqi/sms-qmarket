@@ -189,10 +189,5 @@ public static partial class Loans {
             Filler(instance);
         }
     }
-    
-    private enum LoanSource {
-        Private,
-        Criminals,
-        Bank
-    }
+
 }
