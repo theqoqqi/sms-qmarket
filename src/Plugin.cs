@@ -18,6 +18,7 @@ public class Plugin : BaseUnityPlugin {
 
         harmony = new Harmony("ru.qoqqi.qmarket.patches");
         harmony.PatchAll(typeof(EmployeeManagerPatch));
+        harmony.PatchAll(typeof(CustomerManagerPatch));
         harmony.PatchAll(typeof(Loans.Patches));
         harmony.PatchAll(typeof(DynamicCustomerActivity.Patches));
         harmony.PatchAll(typeof(DailyStatistics.Patches));
