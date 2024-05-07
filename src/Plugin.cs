@@ -24,6 +24,7 @@ public class Plugin : BaseUnityPlugin {
         harmony.PatchAll(typeof(DailyStatistics.Patches));
         harmony.PatchAll(typeof(Expenses.Patches));
         harmony.PatchAll(typeof(DailyEvents.Patches));
+        harmony.PatchAll(typeof(CustomerStrategies.Patches));
 
         gameObject.AddComponent<SkipOnboarding>();
 
