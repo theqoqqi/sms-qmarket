@@ -67,8 +67,9 @@ internal static partial class DynamicCustomerActivity {
 
         CurrentActivity = GetHourlyRate(CurrentHour)
                           * Weekday.Of(CurrentDay).ActivityRate
+                          * GetLicenseFactor()
                           * randomFactor;
-        
+
         return CurrentActivity;
     }
 
