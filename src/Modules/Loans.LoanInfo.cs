@@ -1,31 +1,27 @@
 ﻿using System;
+using QMarketPlugin.Utils;
 
 namespace QMarketPlugin.Modules;
 
 public static partial class Loans {
-    private class LoanInfo {
-
-        public BankCreditSO Instance { get; private set; }
+    private class LoanInfo : ScriptableObjectInfo<BankCreditSO> {
 
         public readonly LoanSource Source;
 
         public readonly string Title;
 
-        private readonly Action<BankCreditSO> Filler;
-
-        public LoanInfo(LoanSource source, string title, int sum, float dailyPercent, int requiredLevel) {
+        public LoanInfo(LoanSource source, string title, int sum, float dailyPercent, int requiredLevel)
+                : base(CreateFiller(sum, dailyPercent, requiredLevel)) {
             Source = source;
             Title = title;
-            Filler = loan => {
+        }
+
+        private static Action<BankCreditSO> CreateFiller(int sum, float dailyPercent, int requiredLevel) {
+            return loan => {
                 loan.Amount = sum;
                 loan.DailyInterestPercent = dailyPercent;
                 loan.RequiredPlayerLevel = requiredLevel;
             };
-        }
-
-        public void AssignInstance(BankCreditSO instance) {
-            Instance = instance;
-            Filler(instance);
         }
     }
 }

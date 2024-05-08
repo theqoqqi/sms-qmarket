@@ -1,12 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
+using QMarketPlugin.Utils;
 
 namespace QMarketPlugin.Modules;
 
 public static partial class Loans {
 
-    private static readonly IDictionary<int, LoanInfo> LoanInfos = new Dictionary<int, LoanInfo>();
+    private static readonly ScriptableObjectListManager<BankCreditSO, int> LoanManager =
+            new ScriptableObjectListManager<BankCreditSO, int>(
+                    bankCredit => bankCredit.ID,
+                    (bankCredit, id) => bankCredit.ID = id
+            );
 
     static Loans() {
         AddLoanInfo(LoanSource.Private, 100, 0, 0, "Занять у родственников");
@@ -26,40 +30,18 @@ public static partial class Loans {
     }
 
     private static void AddLoanInfo(LoanSource source, int sum, float dailyPercent, int requiredLevel, string title) {
-        var loanId = LoanInfos.Count + 1;
+        var loanId = LoanManager.Count + 1;
         var loanInfo = new LoanInfo(source, title, sum, dailyPercent, requiredLevel);
 
-        LoanInfos.Add(loanId, loanInfo);
+        LoanManager.AddInfo(loanId, loanInfo);
     }
 
     private static void Setup() {
-        var vanillaLoans = new List<BankCreditSO>(IDManager.Instance.Loans);
-
-        foreach (var loanId in LoanInfos.Keys) {
-            var loan = FindLoan(vanillaLoans, loanId) ?? CreateExtraLoan(loanId);
-            
-            LoanInfos[loanId].AssignInstance(loan);
-        }
-    }
-
-    private static BankCreditSO CreateExtraLoan(int loanId) {
-        var loan = ScriptableObject.CreateInstance<BankCreditSO>();
-
-        loan.ID = loanId;
-
-        return loan;
+        LoanManager.Setup(IDManager.Instance.Loans);
     }
 
     private static void AddMissingLoans(List<BankCreditSO> loans) {
-        foreach (var loanId in LoanInfos.Keys) {
-            EnsureLoanExists(loans, loanId);
-        }
-    }
-
-    private static void EnsureLoanExists(List<BankCreditSO> loans, int loanId) {
-        if (!FindLoan(loans, loanId) && CanAddExtraLoan(loanId)) {
-            AddExtraLoan(loans, loanId);
-        }
+        LoanManager.PatchList(loans);
     }
 
     private static void AddMissingLoanDatas(ICollection<LoanData> loanDatas, IReadOnlyList<BankCreditSO> loans) {
@@ -72,30 +54,20 @@ public static partial class Loans {
         }
     }
 
-    private static BankCreditSO FindLoan(List<BankCreditSO> loans, int id) {
-        return loans.Find(loan => loan.ID == id);
-    }
-
-    private static bool CanAddExtraLoan(int loanId) {
-        return LoanInfos.ContainsKey(loanId);
-    }
-
-    private static void AddExtraLoan(ICollection<BankCreditSO> loans, int loanId) {
-        loans.Add(LoanInfos[loanId].Instance);
-    }
-
     private static bool CanTakeLoan(BankCreditSO loan) {
         return !BankManager.Instance.Loans
                 .Any(data => data.Taken && IsSameSource(loan, data));
     }
 
     private static bool IsSameSource(BankCreditSO loan, LoanData data) {
-        return LoanInfos[data.LoanID].Source == LoanInfos[loan.ID].Source;
+        var loanInfo = LoanManager.GetInfo<LoanInfo>(loan.ID);
+        var dataInfo = LoanManager.GetInfo<LoanInfo>(data.LoanID);
+
+        return loanInfo.Source == dataInfo.Source;
     }
 
     private static void AddLoanListeners() {
         BankManager.Instance.onTakenLoan += _ => UpdateLoanUis();
         BankManager.Instance.onCompletedLoan += _ => UpdateLoanUis();
     }
-
 }

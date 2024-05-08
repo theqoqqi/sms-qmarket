@@ -10,8 +10,8 @@ namespace QMarketPlugin.Modules;
 
 public static partial class Loans {
     private static void AddLocalizationKeys(IDictionary<int, string> localizedLoanNames) {
-        foreach (var entry in LoanInfos) {
-            localizedLoanNames[entry.Key] = entry.Value.Title;
+        foreach (var loanId in LoanManager.Keys) {
+            localizedLoanNames[loanId] = LoanManager.GetInfo<LoanInfo>(loanId).Title;
         }
     }
 
