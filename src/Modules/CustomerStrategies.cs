@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using QMarketPlugin.Utils;
 
 namespace QMarketPlugin.Modules;
 
 public static partial class CustomerStrategies {
 
-    private static readonly IDictionary<string, Action<CustomerStrategySO>> Fillers =
-            new Dictionary<string, Action<CustomerStrategySO>>();
+    private static readonly ScriptableObjectListManager<CustomerStrategySO, string> StrategyManager =
+            new ScriptableObjectListManager<CustomerStrategySO, string>(
+                    so => so.name,
+                    (so, name) => so.name = name
+            );
 
     static CustomerStrategies() {
         AddFiller("1_OnboardingStrategy", 1, 3, 100, 0, 0);
@@ -29,26 +32,16 @@ public static partial class CustomerStrategies {
             float unlockedRate,
             float expectedRate
     ) {
-        Fillers[name] = strategy => {
+        StrategyManager.AddInfo(name, strategy => {
             strategy.MaxProductCountToBuy = maxProductsToBuy;
             strategy.MaxProductVariantsCountToBuy = maxProductVariantsToBuy;
             strategy.DisplayedProductsRate = displayedRate;
             strategy.UnlockedProductsRate = unlockedRate;
             strategy.ExpectedProductsRate = expectedRate;
-        };
+        });
     }
 
-    private static bool initialized;
-
     private static void Setup(List<CustomerStrategySO> customerStrategies) {
-        if (initialized) {
-            return;
-        }
-
-        foreach (var customerStrategy in customerStrategies) {
-            Fillers[customerStrategy.name](customerStrategy);
-        }
-
-        initialized = true;
+        StrategyManager.Setup(customerStrategies);
     }
 }
