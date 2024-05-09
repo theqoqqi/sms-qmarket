@@ -11,7 +11,7 @@ namespace QMarketPlugin.Modules;
 
 public static partial class DailyEvents {
 
-    private const int AverageExpensesPerLevel = 100;
+    private const int AverageExpensesPerLevel = 50;
 
     private static readonly RangedInt SmallExpenses = new RangedInt(100, 1000);
 
